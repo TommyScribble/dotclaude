@@ -6,7 +6,7 @@ argument-hint: Optional — slug or date of a specific handoff to load instead o
 
 Locate the most recent handoff document and continue from it.
 
-1. List `~/claude-handoffs/handoff-*.md`. Pick the latest by filename date (format: `handoff-YYYY-MM-DD-<slug>.md`); break ties by mtime.
+1. List `/Users/tommy/Documents/Obsidian Vault/handoffs/handoff-*.md` (note the space in the path — quote it in shell commands). Pick the latest by filename date (format: `handoff-YYYY-MM-DD-<slug>.md`); break ties by mtime.
 2. If the user passed an argument, filter to handoffs whose filename contains that string (date or slug) and pick the latest match. If nothing matches, tell the user and stop.
 3. Read the chosen handoff in full.
 4. Briefly tell the user which handoff you loaded (filename + one-line topic) so they can confirm it's the right one.

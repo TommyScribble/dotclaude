@@ -4,7 +4,7 @@ description: Compact the current conversation into a handoff document for anothe
 argument-hint: What will the next session be used for?
 ---
 
-Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to ~/claude-handoffs/ (create the directory if it doesn't exist) with a filename in the format `handoff-YYYY-MM-DD-<slug>.md` where the slug is a 2–3 word kebab-case summary of the session topic.
+Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to `/Users/tommy/Documents/Obsidian Vault/handoffs/` (create the directory if it doesn't exist; note the space in the path — quote it in shell commands) with a filename in the format `handoff-YYYY-MM-DD-<slug>.md` where the slug is a 2–3 word kebab-case summary of the session topic.
 
 Include a "suggested skills" section in the document, which suggests skills that the agent should invoke.
 

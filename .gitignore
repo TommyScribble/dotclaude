@@ -1,0 +1,42 @@
+# Auth and machine-specific state
+../claude.json
+
+# Session data
+projects/
+sessions/
+history.jsonl
+
+# Caches
+cache/
+statsig/
+telemetry/
+paste-cache/
+shell-snapshots/
+backups/
+file-history/
+downloads/
+chrome/
+ide/
+session-env/
+todos/
+plans/
+agent-memory/
+
+# Runtime and machine-local state
+daemon/
+daemon.log
+jobs/
+tasks/
+usage-data/
+stats-cache.json
+mcp-needs-auth-cache.json
+.last-cleanup
+.last-update-result.json
+settings.local.json
+
+# Backups
+.claude-backup/
+
+# Plugins (installed per-machine)
+plugins/
+policy-limits.json

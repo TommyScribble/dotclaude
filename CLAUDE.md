@@ -16,6 +16,11 @@
 - If unsure, run diagnostic commands (npm install status, file existence checks, URL inspection) before edits.
 - Don't read 5+ files exploring when the user has given a concrete bug report — form a hypothesis quickly and verify it.
 
+## CSS Fixes
+
+- When fixing CSS issues, investigate the actual cause before applying fixes. Do not assume margin/padding is the problem — check alignment, parent containers, and layout context first.
+- Do not change parent component styles unless explicitly asked — a fix in a shared parent can break every other consumer.
+
 ## Code Style
 
 - No semicolons

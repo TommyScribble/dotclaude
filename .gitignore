@@ -30,6 +30,7 @@ tasks/
 usage-data/
 stats-cache.json
 mcp-needs-auth-cache.json
+remote-settings.json
 .last-cleanup
 .last-update-result.json
 settings.local.json

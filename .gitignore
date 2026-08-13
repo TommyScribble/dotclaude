@@ -25,6 +25,7 @@ agent-memory/
 # Runtime and machine-local state
 daemon/
 daemon.log
+daemon-auth-*
 jobs/
 tasks/
 usage-data/

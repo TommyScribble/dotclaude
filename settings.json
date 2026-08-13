@@ -1,13 +1,4 @@
 {
-  "effortLevel": "high",
-  "theme": "auto",
-  "enabledPlugins": {
-    "claude-md-management@claude-plugins-official": true
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline-command.sh"
-  },
   "attribution": {
     "commit": "",
     "pr": ""
@@ -50,11 +41,21 @@
             "type": "command",
             "command": "~/.claude/hooks/format-staged.sh",
             "if": "Bash(git commit*)",
-            "statusMessage": "Formatting staged files before commit",
-            "timeout": 120
+            "timeout": 120,
+            "statusMessage": "Formatting staged files before commit"
           }
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "claude-md-management@claude-plugins-official": true
+  },
+  "effortLevel": "high",
+  "theme": "auto",
+  "tui": "fullscreen"
 }

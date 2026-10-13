@@ -81,6 +81,15 @@
         ]
       },
       {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/sentry-quota-guard.sh"
+          }
+        ]
+      },
+      {
         "hooks": [
           {
             "type": "command",

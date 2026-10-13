@@ -1,0 +1,84 @@
+{
+  "boardId": "1261732252",
+  "boardName": "Sprint Board",
+  "defaultGroupId": "new_group6765",
+  "defaultGroupName": "Infrastructure",
+  "groups": {
+    "Reporting": "new_group55013__1",
+    "Marketing": "new_group14080__1",
+    "Searching": "new_group92716__1",
+    "Advertising": "new_group14820__1",
+    "Booking": "new_group73423__1",
+    "Enquiring": "new_group96051__1",
+    "Communicating": "new_group86300__1",
+    "Supporting": "new_group55429__1",
+    "SEO": "new_group__1",
+    "Support requests": "new_group63483",
+    "Infrastructure": "new_group6765",
+    "Unassigned Tasks": "new_group78028",
+    "Dev Support": "group_mm2fxj1c"
+  },
+  "columns": {
+    "status": {
+      "id": "status",
+      "type": "status"
+    },
+    "priority": {
+      "id": "priority",
+      "type": "status"
+    },
+    "valueStream": {
+      "id": "color_mm2f8gqc",
+      "type": "status"
+    },
+    "description": {
+      "id": "description",
+      "type": "text"
+    },
+    "dueDate": {
+      "id": "date",
+      "type": "date"
+    },
+    "people": {
+      "id": "person",
+      "type": "people"
+    },
+    "ticketDetailsDoc": {
+      "id": "monday_doc_mkm5kk66",
+      "type": "doc",
+      "note": "not writable by this skill; bodies go in updates"
+    }
+  },
+  "labels": {
+    "status": [
+      "🏁 Complete",
+      "🚀 Released",
+      "🔁 Impact Review",
+      "🧐 Acceptance Testing",
+      "📝 Templates",
+      "❔ Unassigned",
+      "🔨 In Progress",
+      "📚 Work for Current Sprint",
+      "🤩 Ready to Work On",
+      "✨ Dev Support Done",
+      "🔍 Not Ready to Work On",
+      "🚨 Blocked"
+    ],
+    "priority": [
+      "Medium",
+      "Stretch Goal",
+      "Low",
+      "Critical ⚠️️",
+      "High"
+    ],
+    "valueStream": [
+      "All",
+      "PBSA",
+      "Landlords",
+      "Students",
+      "Default",
+      "Letting Agents",
+      "AFS Team"
+    ]
+  }
+}

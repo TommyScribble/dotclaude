@@ -22,4 +22,11 @@ for pattern in "${DANGEROUS_PATTERNS[@]}"; do
   fi
 done
 
+BLANKET_STAGING='git[[:space:]]+add[[:space:]]+(.*[[:space:]])?(-A|--all|-u|--update|\.)([[:space:];&|]|$)|git[[:space:]]+commit[[:space:]]+(.*[[:space:]])?(-[a-zA-Z]*a[a-zA-Z]*|--all)([[:space:]]|$)'
+
+if echo "$COMMAND" | grep -qE "$BLANKET_STAGING"; then
+  echo "BLOCKED: blanket staging can sweep in changes from another agent or the user. Stage the files you changed by name (git add path/to/file) and commit without -a." >&2
+  exit 2
+fi
+
 exit 0

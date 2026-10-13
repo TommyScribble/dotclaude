@@ -42,3 +42,9 @@ settings.local.json
 # Plugins (installed per-machine)
 plugins/
 policy-limits.json
+
+# Machine-local skill sync and state
+skills/.trash/
+skills/synced/
+state/
+policy-limits.json.stamp.json

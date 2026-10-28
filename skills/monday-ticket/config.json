@@ -1,8 +1,10 @@
 {
   "boardId": "1261732252",
   "boardName": "Sprint Board",
-  "defaultGroupId": "new_group6765",
-  "defaultGroupName": "Infrastructure",
+  "viewId": "6307570",
+  "defaultGroupId": "new_group78028",
+  "defaultGroupName": "Unassigned Tasks",
+  "defaultStatus": "🔍 Not Ready to Work On",
   "groups": {
     "Reporting": "new_group55013__1",
     "Marketing": "new_group14080__1",

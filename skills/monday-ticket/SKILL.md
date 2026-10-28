@@ -10,7 +10,7 @@ description: >
 # Monday Ticket
 
 Read and write tickets on the team's Monday board. This skill can **only** read tickets, create
-them, comment on them, and edit them (title, body, non-status columns). It cannot delete, archive,
+them, comment on them, edit them (title, body, non-status columns), and attach files to an update. It cannot delete, archive,
 move, reassign, change a status, or alter board structure. If the user asks for one of those, say
 it is not wired up and offer to add it.
 
@@ -30,19 +30,30 @@ node scripts/monday.mjs get <itemId>                            # one ticket + i
 node scripts/monday.mjs create <boardId> <groupId|""> <title> [bodyFile] [columnsJsonFile]
 node scripts/monday.mjs comment <itemId> <bodyFile>             # append an update
 node scripts/monday.mjs rename <itemId> <title>                  # change the ticket title
-node scripts/monday.mjs edit-update <updateId> <bodyFile>        # rewrite an existing update
+node scripts/monday.mjs edit-update <updateId> <bodyFile> [file...]  # rewrite an update, re-attaching its files
 node scripts/monday.mjs set-columns <itemId> <columnsJsonFile>   # change column values (not status)
+node scripts/monday.mjs attach <updateId> <file> [file...]       # upload files (e.g. screenshots) to an update
 ```
 
 `get` prints each update's id (`--- update <id> · …`). A ticket's body is its **first** update, so
-editing the body means `edit-update` on that id.
+editing the body means `edit-update` on that id, and screenshots for the body are `attach`ed to it.
 
-`create` prints the new item id. Build the ticket URL as
+Editing an update removes the files attached to it. `edit-update` refuses to run while the update
+has attachments, unless every one is passed again (matched by file name); it then edits the body and
+re-attaches them in the order given. Keep a ticket's images where you can pass them back.
+
+`create` posts to the group the user names, otherwise `defaultGroupId` from `config.json`
+(Unassigned Tasks). It sets status to `defaultStatus` (🔍 Not Ready to Work On) unless the columns
+file gives one. `create` prints the new item id, then the ticket URL. Give the user that URL as it is.
+
+For any other ticket, build the URL as
 `https://accommodation-for-students-team.monday.com/boards/<boardId>/pulses/<itemId>`.
 
 ## Authentication
 
-The token is read from the macOS keychain, falling back to `MONDAY_API_TOKEN`:
+The token is read from the macOS keychain (service `monday-api-token`, or `MONDAY_API_TOKEN` for
+anyone who stored it under the older name), falling back to the `MONDAY_API_TOKEN` environment
+variable:
 
 ```
 security add-generic-password -s monday-api-token -a "$USER" -w
@@ -83,10 +94,18 @@ later turns out wrong. A confident ticket that is wrong costs more than a hedged
 3. Create it, then report the item id and URL.
 
 Monday updates take **HTML, not markdown**. A body file ending in `.md` is converted
-automatically — headings, bold, inline code, fenced code blocks, links and both list styles.
+automatically — headings, bold, fenced code blocks, links, both list styles and `---` dividers
+(with a blank line above and below, since Monday draws `<hr>` flush against its neighbours). Monday strips every
+inline monospace tag and `style` attribute, so inline code keeps its backticks as plain text.
 Tables are not converted, so write them as lists. Nested lists are flattened to one level, so keep
 lists flat and group items under sub-headings instead. A file not ending in `.md` is posted verbatim,
 for when you want to hand-write the HTML.
+
+For a schema or view-model shape, use a fenced JSON block, not a list. Each field's value is its
+type, and optional keys end in `?`, e.g. `"verified?": "boolean"`. Put notes on what each field
+means in a list below the block. The converter emits the block as `<pre>` and turns its leading
+spaces into `&nbsp;`, because Monday collapses leading whitespace. When hand-writing HTML, do the
+same thing yourself.
 
 Column values are a JSON object keyed by column id, written to a file and passed as the last
 argument. Get the ids and valid label values from `describe` — never guess them:

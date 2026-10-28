@@ -2,31 +2,47 @@
 
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
+import { basename } from 'node:path'
 
 const endpoint = 'https://api.monday.com/v2'
+const fileEndpoint = 'https://api.monday.com/v2/file'
 const apiVersion = '2024-10'
+const config = JSON.parse(
+  readFileSync(new URL('../config.json', import.meta.url), 'utf8')
+)
 
 const fail = (message) => {
   console.error(`monday: ${message}`)
   process.exit(1)
 }
 
+const keychainServices = ['monday-api-token', 'MONDAY_API_TOKEN']
+
+const readKeychain = (service) => {
+  try {
+    return execFileSync('security', ['find-generic-password', '-s', service, '-w'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+  } catch {
+    return ''
+  }
+}
+
 const readToken = () => {
+  for (const service of keychainServices) {
+    const token = readKeychain(service)
+
+    if (token) return token
+  }
+
   if (process.env.MONDAY_API_TOKEN) return process.env.MONDAY_API_TOKEN
 
-  try {
-    return execFileSync(
-      'security',
-      ['find-generic-password', '-s', 'monday-api-token', '-w'],
-      { encoding: 'utf8' }
-    ).trim()
-  } catch {
-    return fail(
-      'No Monday token found. Store one with:\n' +
-        '  security add-generic-password -s monday-api-token -a "$USER" -w\n' +
-        'or export MONDAY_API_TOKEN.'
-    )
-  }
+  return fail(
+    'No Monday token found. Store one with:\n' +
+      '  security add-generic-password -s monday-api-token -a "$USER" -w\n' +
+      'or export MONDAY_API_TOKEN.'
+  )
 }
 
 const request = async (query, variables = {}) => {
@@ -157,10 +173,17 @@ const get = async (itemId) => {
   })
 }
 
+const ticketUrl = (boardId, itemId) =>
+  `https://accommodation-for-students-team.monday.com/boards/${boardId}/pulses/${itemId}`
+
 const create = async ({ boardId, groupId, title, bodyPath, columnsPath }) => {
-  const columnValues = columnsPath
-    ? readFileSync(columnsPath, 'utf8')
-    : JSON.stringify({})
+  const requestedColumns = columnsPath
+    ? JSON.parse(readFileSync(columnsPath, 'utf8'))
+    : {}
+  const columnValues = JSON.stringify({
+    status: { label: config.defaultStatus },
+    ...requestedColumns,
+  })
 
   const created = await request(
     `mutation ($board: ID!, $group: String, $name: String!, $columns: JSON) {
@@ -173,7 +196,7 @@ const create = async ({ boardId, groupId, title, bodyPath, columnsPath }) => {
     }`,
     {
       board: boardId,
-      group: groupId || null,
+      group: groupId || config.defaultGroupId,
       name: title,
       columns: columnValues,
     }
@@ -184,6 +207,7 @@ const create = async ({ boardId, groupId, title, bodyPath, columnsPath }) => {
   if (bodyPath) await comment(itemId, bodyPath)
 
   console.log(itemId)
+  console.log(ticketUrl(boardId, itemId))
 }
 
 const escapeHtml = (text) =>
@@ -194,9 +218,11 @@ const escapeHtml = (text) =>
 
 const inlineMarkup = (text) =>
   escapeHtml(text)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+
+const preserveIndentation = (code) =>
+  code.replace(/^ +/gm, (indent) => '&nbsp;'.repeat(indent.length))
 
 const markdownToHtml = (markdown) => {
   const blocks = markdown.split(/```/)
@@ -204,9 +230,11 @@ const markdownToHtml = (markdown) => {
   return blocks
     .map((block, index) => {
       if (index % 2 === 1) {
-        const withoutLanguage = block.replace(/^[a-z]*\n/, '')
+        const withoutLanguage = block
+          .replace(/^[a-z]*\n/, '')
+          .replace(/^\n+|\s+$/g, '')
 
-        return `<pre><code>${escapeHtml(withoutLanguage.trim())}</code></pre>`
+        return `<pre>${preserveIndentation(escapeHtml(withoutLanguage))}</pre>`
       }
 
       return block
@@ -220,6 +248,8 @@ const markdownToHtml = (markdown) => {
 
 const paragraphToHtml = (paragraph) => {
   if (!paragraph) return ''
+
+  if (/^-{3,}$/.test(paragraph)) return '<br><hr><br>'
 
   const heading = paragraph.match(/^(#{1,4})\s+(.*)$/)
 
@@ -267,6 +297,37 @@ const comment = async (itemId, bodyPath) => {
   )
 }
 
+const attach = async (updateId, filePath) => {
+  if (!/^\d+$/.test(updateId)) fail(`update id must be numeric: ${updateId}`)
+
+  const form = new FormData()
+  form.append(
+    'query',
+    `mutation ($file: File!) {
+      add_file_to_update(update_id: ${updateId}, file: $file) { id }
+    }`
+  )
+  form.append(
+    'variables[file]',
+    new Blob([readFileSync(filePath)]),
+    basename(filePath)
+  )
+
+  const response = await fetch(fileEndpoint, {
+    method: 'POST',
+    headers: { 'API-Version': apiVersion, Authorization: readToken() },
+    body: form,
+  })
+
+  const payload = await response.json()
+
+  if (payload.errors) fail(JSON.stringify(payload.errors, null, 2))
+
+  if (payload.error_message) fail(payload.error_message)
+
+  console.log(payload.data.add_file_to_update.id)
+}
+
 const boardIdOf = async (itemId) => {
   const data = await request(
     `query ($ids: [ID!]) {
@@ -298,7 +359,29 @@ const rename = async (itemId, title) => {
   )
 }
 
-const editUpdate = async (updateId, bodyPath) => {
+const attachedFileNames = async (updateId) => {
+  const data = await request(
+    `query ($ids: [ID!]) {
+      updates(ids: $ids) { assets { name } }
+    }`,
+    { ids: [updateId] }
+  )
+
+  return (data.updates?.[0]?.assets ?? []).map((asset) => asset.name)
+}
+
+const editUpdate = async (updateId, bodyPath, reattachPaths) => {
+  const attached = await attachedFileNames(updateId)
+  const reattachNames = reattachPaths.map((filePath) => basename(filePath))
+  const missing = attached.filter((name) => !reattachNames.includes(name))
+
+  if (missing.length > 0) {
+    fail(
+      `update ${updateId} has attached files that editing would remove: ${missing.join(', ')}\n` +
+        'Pass them to re-attach: edit-update <updateId> <bodyFile> <file> [file...]'
+    )
+  }
+
   const body = readBody(bodyPath)
 
   await request(
@@ -307,6 +390,8 @@ const editUpdate = async (updateId, bodyPath) => {
     }`,
     { update: updateId, body }
   )
+
+  for (const filePath of reattachPaths) await attach(updateId, filePath)
 }
 
 const setColumns = async (itemId, columnsPath) => {
@@ -371,13 +456,13 @@ if (command === 'describe') {
 
   console.log(itemId)
 } else if (command === 'edit-update') {
-  const [updateId, bodyPath] = args
+  const [updateId, bodyPath, ...reattachPaths] = args
 
   if (!updateId || !bodyPath) {
-    fail('usage: monday.mjs edit-update <updateId> <bodyFile>')
+    fail('usage: monday.mjs edit-update <updateId> <bodyFile> [file...]')
   }
 
-  await editUpdate(updateId, bodyPath)
+  await editUpdate(updateId, bodyPath, reattachPaths)
 
   console.log(updateId)
 } else if (command === 'set-columns') {
@@ -390,8 +475,16 @@ if (command === 'describe') {
   await setColumns(itemId, columnsPath)
 
   console.log(itemId)
+} else if (command === 'attach') {
+  const [updateId, ...filePaths] = args
+
+  if (!updateId || filePaths.length === 0) {
+    fail('usage: monday.mjs attach <updateId> <file> [file...]')
+  }
+
+  for (const filePath of filePaths) await attach(updateId, filePath)
 } else {
   fail(
-    'usage: monday.mjs describe|list|get|create|comment|rename|edit-update|set-columns ...'
+    'usage: monday.mjs describe|list|get|create|comment|rename|edit-update|set-columns|attach ...'
   )
 }

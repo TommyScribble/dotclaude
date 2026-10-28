@@ -42,6 +42,30 @@ import classNames from 'classnames'
 
 - Components that accept external styling define `className?: string` and merge it onto the root element: `classNames(styles.base, className)`.
 
+## Overriding a Child Component's Styles
+
+Two single-class rules from different CSS modules on the same element tie on specificity, so bundle order decides, and Next orders CSS per page across shared chunks. An override that relies on order works on one route and breaks on another. Make it win on specificity instead:
+
+```scss
+// Loses or wins depending on load order: ties with Link's .alpha
+.link { color: $colour-charlie; }
+
+// Scoped under an ancestor class from this module
+.header .heading { font-size: 20px; }
+
+// Type-qualified when there is no classed ancestor
+a.link { color: $colour-charlie; }
+label.labelDisabled:hover { cursor: not-allowed; }
+```
+
+- Raise only the properties that compete with the child, not the whole block, unless nothing else in it is contested.
+- Check the module's own state and sibling rules still win afterwards (`.list ~ .buttonMobile` is 0,2,0 and still beats `button.showMoreBtn` at 0,1,1). A base rule that gains specificity can also outrank its own `:hover`/disabled rules, so qualify those to match.
+- Check callers that pass `className` into the component: their single-class overrides now lose to the raised rule.
+- If a declaration only repeats what the child already applies, delete it.
+- Never fix a clash by moving imports. That only moves the break to another page.
+- Storybook's injected CSS order differs from Next's, so a story that looks right proves nothing about load order. Verify on a production build (`next start`) or with `node scripts/css-clash-audit/cli.js` after building.
+- The `afs/override-specificity` ESLint rule (warn) flags this in the editor. It traces the class into the child's JSX, wrappers included, and compares it with the child's rules for the element that receives it. "Sets X, which Child also sets on that element" means raise specificity. "Repeats X with the value Child already sets" means delete the declaration: it's only said when the child always applies that value, never when it comes from a variant the child adds conditionally. It reads source only: it can't see `@extend` or values that only match once compiled (`gutter(1)` against `8px`), so the clash audit stays the check.
+
 ## Spacing
 
 - 8px grid via the `gutter()` function: `gutter(1)` = 8px, `gutter(2)` = 16px, `gutter(3)` = 24px, etc.
@@ -146,6 +170,7 @@ import classNames from 'classnames'
 
 - No CSS-in-JS or inline styles (except for CSS custom property injection).
 - No `!important` unless clearly justified.
+- No single-class override of another module's class on the same element (see "Overriding a Child Component's Styles").
 - No deep nesting (3+ levels).
 - No raw `@media` queries — always use the `above()`, `below()`, or `between()` mixins.
 - No shared/utility SCSS files — styles are either local to the component or from `@afs/styles`.

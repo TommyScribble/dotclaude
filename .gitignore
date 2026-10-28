@@ -47,4 +47,5 @@ policy-limits.json
 skills/.trash/
 skills/synced/
 state/
-policy-limits.json.stamp.json
+policy-limits.json.*
+remote-settings.json.*

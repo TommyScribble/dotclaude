@@ -17,12 +17,26 @@ SAFE_ENV_TEMPLATE='\.env\.(example|sample|template|dist)([^a-zA-Z0-9_.-]|$)'
 ENV_FILE='(^|[^a-zA-Z0-9_.-])\.env(\.[a-zA-Z0-9_.-]+)?([^a-zA-Z0-9_.-]|$)'
 EXISTENCE_CHECK_ONLY='^[[:space:]]*(ls|test[[:space:]]+-[efs]|\[[[:space:]]+-[efs])[[:space:]]'
 
-COMMAND_WITHOUT_MESSAGES=$(echo "$COMMAND" | sed -E "s/(-m|--message)[[:space:]=]*\"[^\"]*\"//g; s/(-m|--message)[[:space:]=]*'[^']*'//g")
+ENV_READER='^[[:space:](]*((sudo|command|exec|time|nice)[[:space:]]+)*(cat|bat|less|more|head|tail|nl|tac|grep|egrep|fgrep|rg|ag|ack|awk|gawk|sed|cut|sort|uniq|strings|xxd|od|hexdump|base64|openssl|cp|mv|scp|rsync|ln|tar|zip|source|\.|diff|cmp|vi|vim|nvim|nano|emacs|code|open|bash|sh|zsh|python|python3|node|ruby|perl|php|dotenv|env-cmd|tee|curl|git[[:space:]]+(add|show|cat-file|diff|stash))([[:space:]]|$)'
+ENV_REDIRECT='<[[:space:]]*[^[:space:]<]*\.env'
+RUNS_ON_FOUND_FILES='(^|[[:space:]])(xargs|-exec|-execdir|-ok)([[:space:]]|$)'
 
-if echo "$COMMAND_WITHOUT_MESSAGES" | sed -E "s/$SAFE_ENV_TEMPLATE//g" | grep -qE "$ENV_FILE"; then
-  if ! echo "$COMMAND" | grep -qE "$EXISTENCE_CHECK_ONLY" || echo "$COMMAND" | grep -qE '[;&|]'; then
-    block "this command touches a .env file, which holds secrets. Checking it exists (ls, test -f) is fine. To know which keys it sets, ask Tommy, or read .env.example."
-  fi
+block_env_read() {
+  block "this command reads a .env file, which holds secrets. Listing or checking it exists is fine. To know which keys it sets, ask Tommy, or read .env.example."
+}
+
+COMMAND_WITHOUT_MESSAGES=$(echo "$COMMAND" | sed -E "s/(-m|--message)[[:space:]=]*\"[^\"]*\"//g; s/(-m|--message)[[:space:]=]*'[^']*'//g")
+COMMAND_FOR_ENV_CHECK=$(echo "$COMMAND_WITHOUT_MESSAGES" | sed -E "s/$SAFE_ENV_TEMPLATE//g")
+
+if echo "$COMMAND_FOR_ENV_CHECK" | grep -qE "$ENV_FILE"; then
+  echo "$COMMAND_FOR_ENV_CHECK" | grep -qE "$RUNS_ON_FOUND_FILES" && block_env_read
+
+  while IFS= read -r SEGMENT; do
+    echo "$SEGMENT" | grep -qE "$ENV_FILE" || continue
+    if echo "$SEGMENT" | grep -qE "$ENV_READER" || echo "$SEGMENT" | grep -qE "$ENV_REDIRECT"; then
+      block_env_read
+    fi
+  done <<< "$(echo "$COMMAND_FOR_ENV_CHECK" | awk '{ gsub(/&&|\|\||[;&|`]|\$\(/, "\n"); print }')"
 fi
 
 PRIVATE_KEY_OR_CREDENTIALS='(\.ssh/id_[a-z0-9_]+([^.a-z0-9_]|$)|\.ssh/[^[:space:]]*\.pem|\.pem([^a-zA-Z0-9]|$)|\.p12([^a-zA-Z0-9]|$)|\.key([^a-zA-Z0-9]|$)|\.aws/credentials|\.netrc|\.npmrc|\.config/gh/hosts\.yml|\.docker/config\.json|\.claude\.json)'

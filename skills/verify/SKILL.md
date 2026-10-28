@@ -12,17 +12,17 @@ Run `git status` and `git diff --stat` (plus `git diff --cached --stat`). Decide
 
 ## 2. Pick the gates for this repo
 
-Use the repo's own package manager: **pnpm** in `afs-turborepo-poc`, **npm** everywhere else. Never mix them.
+Use the repo's own package manager: **pnpm** in `afs-turborepo-poc` and `website-front-end` (since 2026-10-16), **npm** everywhere else. Never mix them.
 
 ### website-front-end
 
 | Gate | Command | When |
 |---|---|---|
-| Types | `npm run check-types` | Always for code changes |
-| Unit tests | `npx jest <changed area>` first, then `npm test` before committing | Always for code changes |
-| Build | `npm run build` | Config, dependency, `next.config`, routing or SSR changes |
-| CSS fingerprint | `npm run css:fingerprint:diff` | SCSS, styling dependencies, build tooling |
-| Local VRT | `npm run vrt:local:compare` (expect all identical) | Visual components, styles, dependency upgrades |
+| Types | `pnpm run check-types` | Always for code changes |
+| Unit tests | `pnpm --filter website exec jest <changed area>` first, then `pnpm test` before committing | Always for code changes |
+| Build | `pnpm run build` | Config, dependency, `next.config`, routing or SSR changes |
+| CSS fingerprint | `pnpm run css:fingerprint:diff` | SCSS, styling dependencies, build tooling |
+| Local VRT | `pnpm --filter website run vrt:local:compare` (expect all identical) | Visual components, styles, dependency upgrades |
 
 ### afs-turborepo-poc
 

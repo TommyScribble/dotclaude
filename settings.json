@@ -189,6 +189,29 @@
   "enabledPlugins": {
     "claude-md-management@claude-plugins-official": true
   },
+  "sandbox": {
+    "enabled": true,
+    "filesystem": {
+      "allowWrite": [
+        "~/.claude"
+      ]
+    },
+    "network": {
+      "allowLocalBinding": true,
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "*.npmjs.org",
+        "github.com",
+        "api.github.com",
+        "raw.githubusercontent.com",
+        "objects.githubusercontent.com",
+        "*.googleapis.com",
+        "accounts.google.com",
+        "vercel.com",
+        "api.vercel.com"
+      ]
+    }
+  },
   "effortLevel": "high",
   "tui": "fullscreen",
   "theme": "auto",

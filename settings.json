@@ -73,6 +73,10 @@
           },
           {
             "type": "command",
+            "command": "~/.claude/hooks/block-secret-access.sh"
+          },
+          {
+            "type": "command",
             "command": "~/.claude/hooks/format-staged.sh",
             "if": "Bash(git commit*)",
             "timeout": 120,
